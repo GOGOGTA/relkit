@@ -13,7 +13,7 @@ pip install relkit
 Or run from source:
 
 ```bash
-git clone https://github.com/REPLACE_ME/relkit
+git clone https://github.com/GOGOGTA/relkit
 cd relkit
 pip install -e .
 ```
