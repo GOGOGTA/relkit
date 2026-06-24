@@ -24,3 +24,21 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
+  lint-commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install relkit
+        run: pip install -e .
+
+      - name: Lint PR commits
+        run: relkit lint --from origin/${{ github.base_ref }} --to HEAD

@@ -1,0 +1,64 @@
+name: 'relkit changelog'
+description: 'Generate a grouped Markdown changelog from Conventional Commits using relkit.'
+branding:
+  icon: 'list'
+  color: 'gray-dark'
+
+inputs:
+  from:
+    description: 'Start of the revision range (defaults to the latest tag).'
+    required: false
+  to:
+    description: 'End of the revision range.'
+    required: false
+    default: 'HEAD'
+  release:
+    description: 'Heading label for the rendered section, e.g. v1.2.0.'
+    required: false
+    default: 'Unreleased'
+  repo-url:
+    description: 'Repo URL used to link commits, e.g. https://github.com/owner/repo.'
+    required: false
+  write:
+    description: 'File path to prepend the rendered section into (e.g. CHANGELOG.md).'
+    required: false
+  version:
+    description: 'Git ref of relkit itself to install (branch, tag, or commit).'
+    required: false
+    default: 'main'
+
+outputs:
+  changelog:
+    description: 'The rendered changelog Markdown.'
+    value: ${{ steps.relkit.outputs.changelog }}
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install relkit
+      shell: bash
+      run: pip install "git+https://github.com/GOGOGTA/relkit.git@${{ inputs.version }}"
+
+    - name: Run relkit changelog
+      id: relkit
+      shell: bash
+      run: |
+        args=(changelog --to "${{ inputs.to }}" --release "${{ inputs.release }}")
+        if [ -n "${{ inputs.from }}" ]; then
+          args+=(--from "${{ inputs.from }}")
+        fi
+        if [ -n "${{ inputs.repo-url }}" ]; then
+          args+=(--repo-url "${{ inputs.repo-url }}")
+        fi
+        if [ -n "${{ inputs.write }}" ]; then
+          args+=(--write "${{ inputs.write }}")
+        fi
+
+        output="$(relkit "${args[@]}")"
+        echo "changelog<<RELKIT_EOF" >> "$GITHUB_OUTPUT"
+        echo "$output" >> "$GITHUB_OUTPUT"
+        echo "RELKIT_EOF" >> "$GITHUB_OUTPUT"
