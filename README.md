@@ -45,6 +45,29 @@ Include maintenance commits (`chore`, `ci`, `test`, `build`, `style`, `revert`) 
 relkit changelog --include-all
 ```
 
+### Linting commits in CI
+
+Catch non-conventional commits before they pollute your changelog. Exits non-zero if anything in the range doesn't parse (merge commits are exempt):
+
+```bash
+relkit lint --from origin/main --to HEAD
+```
+
+### Using it as a GitHub Action
+
+Other repos can run relkit directly in CI without managing a Python environment themselves:
+
+```yaml
+- uses: GOGOGTA/relkit@main
+  id: changelog
+  with:
+    release: v1.3.0
+    repo-url: https://github.com/your-org/your-repo
+    write: CHANGELOG.md
+```
+
+The rendered Markdown is also available as `${{ steps.changelog.outputs.changelog }}` for posting to a release or PR comment.
+
 ### Example output
 
 ```markdown
