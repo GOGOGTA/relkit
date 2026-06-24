@@ -8,6 +8,7 @@ import sys
 from . import __version__
 from .changelog import prepend_to_file, render
 from .git import GitError, get_commits, latest_tag
+from .lint import lint
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -50,6 +51,21 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Prepend the rendered section to this file instead of printing it.",
     )
 
+    lint_cmd = subparsers.add_parser(
+        "lint", help="Check that commits in a range follow Conventional Commits."
+    )
+    lint_cmd.add_argument(
+        "--from",
+        dest="from_ref",
+        help="Start of the revision range (default: latest tag, or repo root if none).",
+    )
+    lint_cmd.add_argument(
+        "--to", dest="to_ref", default="HEAD", help="End of the revision range (default: HEAD)."
+    )
+    lint_cmd.add_argument(
+        "--repo", dest="repo_path", default=".", help="Path to the git repository."
+    )
+
     return parser
 
 
@@ -79,12 +95,34 @@ def _run_changelog(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_lint(args: argparse.Namespace) -> int:
+    from_ref = args.from_ref or latest_tag(args.repo_path)
+    rev_range = f"{from_ref}..{args.to_ref}" if from_ref else args.to_ref
+
+    try:
+        violations = lint(rev_range, args.repo_path)
+    except GitError as exc:
+        print(f"relkit: {exc}", file=sys.stderr)
+        return 1
+
+    if not violations:
+        print("relkit: all commits follow Conventional Commits.")
+        return 0
+
+    print(f"relkit: {len(violations)} commit(s) don't follow Conventional Commits:\n")
+    for violation in violations:
+        print(f"  {violation.sha[:7]}  {violation.subject}")
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "changelog":
         return _run_changelog(args)
+    if args.command == "lint":
+        return _run_lint(args)
 
     parser.print_help()
     return 1
