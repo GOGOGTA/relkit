@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from .parser import Commit, parse_commit
 
 _FIELD_SEP = "\x1f"
-_ENTRY_SEP = "\x1e"
 
 
 class GitError(RuntimeError):
@@ -57,15 +56,17 @@ def latest_tag(repo_path: str = ".") -> str | None:
 
 
 def _iter_raw_commits(rev_range: str, repo_path: str) -> list[RawCommit]:
-    fmt = f"%H{_FIELD_SEP}%s{_FIELD_SEP}%b{_ENTRY_SEP}"
-    output = _run_git(["log", rev_range, "--reverse", f"--format={fmt}"], repo_path)
+    # -z NUL-terminates each entry instead of relying on a control character that a
+    # commit message could (in theory) contain itself, so entry boundaries are unambiguous.
+    fmt = f"%H{_FIELD_SEP}%s{_FIELD_SEP}%b"
+    output = _run_git(["log", rev_range, "-z", "--reverse", f"--format={fmt}"], repo_path)
 
     commits: list[RawCommit] = []
-    for entry in output.split(_ENTRY_SEP):
+    for entry in output.split("\0"):
         entry = entry.strip("\n")
         if not entry:
             continue
-        sha, subject, body = entry.split(_FIELD_SEP)
+        sha, subject, body = entry.split(_FIELD_SEP, maxsplit=2)
         commits.append(RawCommit(sha=sha, subject=subject, body=body))
     return commits
 
