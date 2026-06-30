@@ -7,6 +7,7 @@ import sys
 
 from . import __version__
 from .changelog import prepend_to_file, render
+from .config import load_config
 from .git import GitError, get_commits, latest_tag
 from .lint import lint
 
@@ -46,6 +47,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Include chore/ci/test/build/style/revert commits too.",
     )
     changelog_cmd.add_argument(
+        "--scope",
+        dest="scope",
+        help="Only include commits with this scope, e.g. --scope cli for 'feat(cli): ...'.",
+    )
+    changelog_cmd.add_argument(
         "--write",
         dest="write_path",
         help="Prepend the rendered section to this file instead of printing it.",
@@ -70,6 +76,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _run_changelog(args: argparse.Namespace) -> int:
+    config = load_config(args.repo_path)
     from_ref = args.from_ref or latest_tag(args.repo_path)
     rev_range = f"{from_ref}..{args.to_ref}" if from_ref else args.to_ref
 
@@ -79,11 +86,14 @@ def _run_changelog(args: argparse.Namespace) -> int:
         print(f"relkit: {exc}", file=sys.stderr)
         return 1
 
+    if args.scope:
+        commits = [c for c in commits if c.scope == args.scope]
+
     section = render(
         commits,
         version=args.release,
-        repo_url=args.repo_url,
-        include_all=args.include_all,
+        repo_url=args.repo_url or config.repo_url,
+        include_all=args.include_all or config.include_all,
     )
 
     if args.write_path:
