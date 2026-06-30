@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 import pytest
 
@@ -31,6 +32,19 @@ def test_changelog_exits_zero_and_prints(tmp_path, capsys):
     assert "add widget" in capsys.readouterr().out
 
 
+def test_changelog_scope_filters_commits(tmp_path, capsys):
+    _init_repo(tmp_path)
+    _commit(tmp_path, "feat(cli): add widget")
+    _commit(tmp_path, "feat(api): add endpoint")
+
+    exit_code = main(["changelog", "--repo", str(tmp_path), "--scope", "cli"])
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "add widget" in out
+    assert "add endpoint" not in out
+
+
 def test_lint_exits_zero_when_clean(tmp_path, capsys):
     _init_repo(tmp_path)
     _commit(tmp_path, "feat: add widget")
@@ -61,3 +75,19 @@ def test_changelog_errors_cleanly_on_invalid_repo(tmp_path, capsys):
 def test_missing_command_prints_help():
     with pytest.raises(SystemExit):
         main([])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="config support requires the stdlib tomllib (3.11+)"
+)
+def test_changelog_uses_repo_url_from_pyproject_config(tmp_path, capsys):
+    _init_repo(tmp_path)
+    _commit(tmp_path, "feat: add widget")
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.relkit]\nrepo-url = "https://github.com/example/demo"\n'
+    )
+
+    exit_code = main(["changelog", "--repo", str(tmp_path)])
+
+    assert exit_code == 0
+    assert "https://github.com/example/demo/commit/" in capsys.readouterr().out
