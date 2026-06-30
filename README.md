@@ -45,6 +45,27 @@ Include maintenance commits (`chore`, `ci`, `test`, `build`, `style`, `revert`) 
 relkit changelog --include-all
 ```
 
+Only include commits with a given scope, e.g. commits like `feat(cli): ...`:
+
+```bash
+relkit changelog --scope cli
+```
+
+### Setting defaults in pyproject.toml
+
+Stop retyping `--repo-url` every time by adding a `[tool.relkit]` table:
+
+```toml
+[tool.relkit]
+repo-url = "https://github.com/your-org/your-repo"
+include-all = false
+```
+
+CLI flags always take precedence over the config file. This requires Python 3.11+ (it
+reads the table with the stdlib `tomllib`); on older interpreters it's silently ignored
+rather than pulling in a TOML parser as a dependency — relkit stays zero-dependency on
+every supported Python version.
+
 ### Linting commits in CI
 
 Catch non-conventional commits before they pollute your changelog. Exits non-zero if anything in the range doesn't parse (merge commits are exempt):
@@ -99,6 +120,7 @@ Most changelog tools either require a hosted service, a config file with a learn
 ```bash
 pip install -e ".[dev]"
 pytest
+mypy src/relkit
 ```
 
 ## License
