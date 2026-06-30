@@ -31,7 +31,10 @@ Issues = "https://github.com/GOGOGTA/relkit/issues"
 relkit = "relkit.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "mypy>=1.8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/relkit"]
+
+[tool.mypy]
+strict = true
