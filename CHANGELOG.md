@@ -1,3 +1,17 @@
+## v0.3.0 (2026-06-30)
+
+### Features
+
+- support [tool.relkit] defaults in pyproject.toml and add --scope filter ([`2fc28cc`](https://github.com/GOGOGTA/relkit/commit/2fc28ccda4c2257a0409cc9c8a6a781bbe7b4317))
+
+### Bug Fixes
+
+- **git:** use NUL-terminated git log entries to avoid separator collisions with commit content ([`434e4bc`](https://github.com/GOGOGTA/relkit/commit/434e4bcbf27e0fbabcb4ea1c0786f897dfcff108))
+
+### Documentation
+
+- document --scope filter and pyproject.toml config support ([`ddb4bdc`](https://github.com/GOGOGTA/relkit/commit/ddb4bdc0dcbf1b259aebf384fc8278946e1fc393))
+
 ## v0.2.0 (2026-06-24)
 
 ### Features
